@@ -1,0 +1,25 @@
+{
+    "https://www.proxy-list.download/api/v1/get?type={type}&anon={anon}": {
+        "SCRAPER" : "scraper",
+        "TYPE" : ["https", "http"],
+        "anon" : ["elite", "transparent", "anonymous"]  
+    },
+    "https://api.proxyscrape.com/?request=getproxies&proxytype={type}&timeout={timeout}&country={country}" : {
+        "SCRAPER" : "scraper",
+        "TYPE" : ["https", "http"],
+        "timeout" : 1000,
+        "country" : "All"
+    },
+    "https://sslproxies.org" : {
+        "SCRAPER" : "table",
+        "TYPE" : "https"
+    },
+    "https://free-proxy-list.net" : {
+        "SCRAPER" : "table",
+        "TYPE" : ["https", "http"]
+    },
+    "https://us-proxy.org" : {
+        "SCRAPER" : "table",
+        "TYPE" : ["https", "http"]
+    }
+} 
