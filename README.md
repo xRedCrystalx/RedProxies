@@ -24,13 +24,12 @@ source .venv/bin/activate    // bash - Linux
 ## Usage
 
 ```c
-usage: main.py [-h] -p PROXY [-o OUTPUT]
+usage: main.py [-h] -p ARG [-o ARG]
 
 options:
-  -h, --help                   Show this help message and exit
-  -p PROXY, --proxy PROXY      Supported proxy type: HTTP, HTTPS (can be lowercased)
-  -o OUTPUT, --output OUTPUT   Output file name to save .txt file
-
+  -h, --help            show this help message and exit
+  -p ARG, --proxy ARG   Supported proxy type: HTTP, HTTPS (can be lowercased)
+  -o ARG, --output ARG  Output file name to save .txt file
 ```
 **Usage Examples**
 ```
