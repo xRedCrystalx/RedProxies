@@ -1,5 +1,5 @@
 # RedProxies
-RedProxies is a python tool that helps with scraping, verifying and using (in future) proxy servers that are open and accessible by anyone.
+RedProxies is a python tool that helps with scraping, verifying and using (in the future) proxy servers that are open and accessible by anyone.
 
 Please note that this project is still under development and I have plans to add many more features including **SOCKS proxy support**, **proxy tunneling** and other custom features. Feel free to report all the bugs and ideas in [issues](https://github.com/xRedCrystalx/RedProxies/issues). Thanks!
 
@@ -13,7 +13,7 @@ Make sure to have **Python 3.12** and **PIP** installed.
 ```
 pip install -r requirements.txt
 ```
-*It is recommended to run project in virtual environment (venv)*
+*It is recommended to run the project in a virtual environment (venv)*
 ```java
 python3 -m venv .venv
 
@@ -39,7 +39,7 @@ python3 main.py -p HTTP -o proxy_ips.txt
 python3 main.py --proxy HTTPS
 ```
 ## Configuration:
-Project is made to be as customizable as possible, that is why I have created a config file. Currently, this is **JSON** file, but it could get changed to **YAML** or other file types in future.
+This project is made to be as customizable as possible which is why I have created a config file. Currently, this is a **JSON** file, but it may be changed to **YAML** or other file types in future.
 ```json
 {
     "<link>" : {
