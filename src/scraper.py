@@ -32,15 +32,17 @@ class IPAddress:
 # global scraper class for websites, used by other scrapers
 # this scraper can find IPv4 and IPv6 addresses with PORTs that are listed on website using regex
 class Scraper:
-    def __init__(self, url: str, session: aiohttp.ClientSession) -> None:
+    def __init__(self, url: str, protocol: str, session: aiohttp.ClientSession) -> None:
         self.url: str = url
         self.session: aiohttp.ClientSession = session
+        self.protocol: str = protocol
         self.IPs: list[IPAddress] = []
         
         # constants for IP searching
         self.constants: dict[str, re.Pattern | list[str | re.Pattern]] = {
             "IPTypes" : ["ip", "host", "address", "ipv4", "ipv6"],
             "PortTypes" : ["port", "portnumber", "gate"],
+            "Protocols" : ["ssl", "secure", "socks", "http", "https", "socks4", "socks5"],
             
             "IPv4" : re.compile(r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b"),
             "IPv4+PORT" : re.compile(r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}:[0-9]+\b"),
@@ -49,7 +51,6 @@ class Scraper:
             "IPv6+PORT": re.compile(r"\b(?:\[?[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\]?:[0-9]+\b"),
             
             "PORT" : re.compile(r"\b(?:[1-9]\d{0,3}|[1-5]\d{4}|6[0-4]\d{3}|65[0-4]\d{2}|655[0-2]\d|6553[0-5])\b"),
-            "PROTOCOLS" : ["ssl", "secure", "socks", "http", "https", "socks4", "socks5"]
         }
 
     # async method that requests data from the given link
@@ -107,11 +108,15 @@ class TableScraper(Scraper):
 
         return "\n".join(proxies)
     """
-    
+
+# json scraper class, equals to **Scraper**, changes searching functionality
 class JSONScraper(Scraper):
+    # replacing handler method with new one for searching
+    # this handler is programmed to try and figure out what JSON object it got and create IP:PORT matches with filtered requests
+    # handler might not be able to handle every kind of provided JSON objects
     async def handler(self, text: str) -> str:
         print("JSON Scraper is currently work in progress")
-        #return
+        return
         
         # decoding attempt
         try:
@@ -121,15 +126,16 @@ class JSONScraper(Scraper):
                 decodedJSON: dict = json.load(text)
             except Exception:
                 print(f"JSONScraper failed to decode data of {self.url} website. -- Attempting to perform normal Scraper attempt.")
+                # if it fails, we attempt to search for IPs with basic scraper
                 await Scraper(url=self.url, session=self.session).scrape()
                 return
         
         # successful decoding
         # now we have to figure out structure
+        # booleans to check what we have found
         check: dict[str, bool] = {
             "IP" : False,
-            "PORT" :  False,
-            "TYPE" : False
+            "PORT" :  False
         }
         
         def recursive_checking(data: dict, index: int) -> None:
@@ -144,44 +150,79 @@ class JSONScraper(Scraper):
                 else:
                     index += 1
         
+        # start of the JSON onject. {}
+        # values have to be lists or dicts, otherwise no IPs were provided (normally error messages)
         for key, value in self.constants.items():
+            # here are three posibilities, list of IP:PORT (str), list of dict or list of lists
+            # # dict[str, list[ANY]]
             if isinstance(value, list):
-                # here are three posibilities, list of IP:PORT (str) or list of dict or list of lists
-                # lets check if the first argument is string
+                # lets check if the first argument is string, if so, this is *most likely* list of IPs
+                # dict[str, list[str]]
                 if isinstance(value[0], str):
                     # now, we search for IPv4 and IPv6 IPs with port and extend to database
                     for regex in ["IPv4+PORT", "IPv6+PORT"]:
                         self.IPs.extend(re.findall(pattern=self.constants[regex], string=text, flags=re.IGNORECASE))
                 
-                # checking if the first value is dict
+                # checking if the first value is dict, this normally is dict with key:value for IP ({"ip" : "192.168.1.1.", "port" : "80", "protocol" : "http"})
+                # dict[str, list[dict[str, ANY]]]
                 elif isinstance(value[0], dict):
-                    ...
+                    # we iterate the list
+                    for dictionary in value:
+                        # set default IPAddress object
+                        IP = IPAddress(IPv4=None, IPv6="", PORT=None)
+                        for k, v in dictionary.items():
+                            # checking for each key in the dict. If we don't get IP, PORT and right protocol, that dict will be ignored
+                            if k in self.constants["IPTypes"]:
+                                #now we have to figure out if its IPv4 or IPv6
+                                if re.findall(self.constants["IPv4", v]):
+                                    IP.IPv4 = v
+                                else:
+                                    IP.IPv6 = v
+                                # setting check to true for save check
+                                check["IP"] = True
+                            
+                            # checking if key is port
+                            elif k in self.constants["PortTypes"]:
+                                IP.PORT = v
+                                # setting check to true for save check
+                                check["PORT"] = True
+                            
+                            # checking for protocols -- this will require future update
+                            elif k in self.constants["Protocols"]:
+                                if v.lower() != self.protocol.lower():
+                                    # reseting checks and skiping this dict
+                                    check["IP"], check["PORT"] = (False, False)
+                                    continue
+                        else:
+                            # if IP wasnt fully set, we skip
+                            if False in list(check.values()):
+                                check["IP"], check["PORT"] = (False, False)
+                                continue
+                            else:
+                                # add the IP and reset checker
+                                self.IPs.append(IP)
+                                check["IP"], check["PORT"] = (False, False)
                 
-                # checking if the first value is list
-                # here, only logical posibility is to have multiple lists for each IP version (IPv4 and IPv6)
-                # or lists of different protocols (HTTP, HTTPS, SOCKS...)
-                elif isinstance(value[0], list):
-                    # im going to use len() to figure out if its versions (2) or protocols (2+)
-                    # versions:
-                    if list_len := len(value) == 2:
-                        for regex in ["IPv4+PORT", "IPv6+PORT"]:
-                            self.IPs.extend(re.findall(pattern=self.constants[regex], string=text, flags=re.IGNORECASE))
-                    # list is empty returning
-                    elif list_len == 0:
-                        return "List is empty."
-                    
-                    # protocols:
-                    else:
-                        ...
-                
-                # else, we can't really find anything else, so returning
+                # else, we can't really find anything else, list[list[ANY]] is really not logical, so returning
                 else:
                     print(f"Couldn't gather any data from: {self.url}")
                     return
-                
+            #  
             elif isinstance(value, dict):
                 ...
+            
             else:
                 # if value is string, bool, int, float - there is no way of IP addresses being stored
                 print(f"Couldn't find any IP address for url: {self.url}")
                 return
+
+
+"""
+{
+    "ipv4" : ["IP1", "IP2"]
+    
+}
+
+
+
+"""
