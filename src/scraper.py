@@ -116,7 +116,7 @@ class JSONScraper(Scraper):
     # handler might not be able to handle every kind of provided JSON objects
     async def handler(self, text: str) -> str:
         print("JSON Scraper is currently work in progress")
-        return
+        #return
         
         # decoding attempt
         try:
