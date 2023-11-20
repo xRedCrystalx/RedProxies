@@ -94,15 +94,18 @@ class Main:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    metavar = "ARG"
     parser.add_argument(
         "-p", "--proxy",
         help="Supported proxy type: HTTP, HTTPS (can be lowercased)",
         required=True,
+        metavar=metavar
     )
     parser.add_argument(
         "-o", "--output",
         help="Output file name to save .txt file",
         default="output.txt",
+        metavar=metavar
     )
     args: argparse.Namespace = parser.parse_args()
 
