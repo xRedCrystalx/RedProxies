@@ -133,6 +133,7 @@ class JSONScraper(Scraper):
         # successful decoding
         # now we have to figure out structure
         # booleans to check what we have found
+        
         check: dict[str, bool] = {
             "IP" : False,
             "PORT" :  False

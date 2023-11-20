@@ -21,5 +21,6 @@
     "https://us-proxy.org" : {
         "SCRAPER" : "table",
         "TYPE" : ["https", "http"]
+        
     }
 } 
