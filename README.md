@@ -22,7 +22,6 @@ source .venv/bin/activate    // bash - Linux
 ```
 
 ## Usage
-
 ```c
 usage: main.py [-h] -p ARG [-o ARG]
 
@@ -37,46 +36,11 @@ python3 main.py -p HTTP -o proxy_ips.txt
 
 python3 main.py --proxy HTTPS
 ```
-## Configuration:
-This project is made to be as customizable as possible which is why I have created a config file. Currently, this is a **JSON** file, but it may be changed to **YAML** or other file types in future.
-```json
-{
-    "<link>" : {
-        "SCRAPER" : str
-        "TYPE" : list, str
 
-        "<custom lowercased variable>" : str, bool, list, int, float
-    },
-}
-```
-Each of the scraping `link` requires:
-- **SCRAPER** - *must be fully UPPERCASED*; only allowed to be one of: **["scraper", "json", "table"]** 
+## Documentation
+All documentation can be found [here](https://github.com/xRedCrystalx/RedProxies/tree/main/docs).
 
-      specifies scraper that will be used for that link
-- **TYPE** - *must be fully UPPERCASED*; can be string or list of: **["http", "https", "socks4", "socks5"]** 
-
-      specifies which types of proxies that link has
-- **custom value** - *must be fully lowercased*; optional
-
-Custom values:
-- **KEY** -  **str** - *must be fully lowercased*
-  
-      will be used as placeholder of the link (look at the example)
-- **VALUE** - **str, bool, int, float, list**
-  
-      will be used as value of placeholders, lists will be iterated by the program.
-
-**Example:**
-```json
-{
-    "https://api.proxyscrape.com/?request=getproxies&proxytype={type}&timeout={timeout}&country={country}" : {
-        "SCRAPER" : "scraper",
-        "TYPE" : ["https", "http"],
-        "timeout" : 1000,
-        "country" : "All"
-    }
-}
-```
+- [Configuration File](https://github.com/xRedCrystalx/RedProxies/blob/main/docs/config_file.rst)
 
 ## License
 This software is licensed under the [Creative Commons Attribution-NonCommercial 4.0 International License](https://creativecommons.org/licenses/by-nc/4.0/legalcode)
