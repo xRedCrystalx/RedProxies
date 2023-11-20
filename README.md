@@ -46,4 +46,3 @@ All documentation can be found [here](https://github.com/xRedCrystalx/RedProxies
 This software is licensed under the [Creative Commons Attribution-NonCommercial 4.0 International License](https://creativecommons.org/licenses/by-nc/4.0/legalcode)
 
 You can find this project's licence [here](https://github.com/xRedCrystalx/RedProxies/blob/main/LICENSE).
-
