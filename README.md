@@ -40,7 +40,7 @@ python3 main.py --proxy HTTPS
 ## Documentation
 All documentation can be found [here](https://github.com/xRedCrystalx/RedProxies/tree/main/docs).
 
-- [Configuration File](https://github.com/xRedCrystalx/RedProxies/blob/main/docs/config_file.rst)
+- [Configuration File](https://github.com/xRedCrystalx/RedProxies/blob/main/docs/config_file.md)
 
 ## License
 This software is licensed under the [Creative Commons Attribution-NonCommercial 4.0 International License](https://creativecommons.org/licenses/by-nc/4.0/legalcode)
