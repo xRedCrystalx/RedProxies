@@ -1,6 +1,6 @@
 import sys, argparse, asyncio, aiohttp, json, os, typing, random
 sys.dont_write_bytecode = True
-from src.scraper import IPAddress, Scraper, TableScraper
+from src.scraper import IPAddress, Scraper, TableScraper, JSONScraper
 
 class Main:
     def __init__(self) -> None:
@@ -12,7 +12,7 @@ class Main:
         
         with open(f"{self.path}/config.json", "r", encoding="utf-8") as config:
             try:
-                self.config: dict[str, dict[str, str | bool | list[str] | int]] = json.load(config)
+                self.config: dict[str, dict[str, dict[str, str | bool | list[str] | int]]] = json.load(config)
             except Exception as error:
                 raise error
 
@@ -35,10 +35,12 @@ class Main:
                     case "scraper":
                         self.proxy_scrapers.append(Scraper(url=link.format(**db), session=self.session))
                     #if something random, throw the basic scraper
+                    case "json":
+                        self.proxy_scrapers.append(JSONScraper(url=link.format(**db), session=self.session))
                     case _:
                         self.proxy_scrapers.append(Scraper(url=link.format(**db), session=self.session))
 
-        for link, data in config.items():
+        for link, data in config["WebsiteScraper"].items():
             if not data.get("SCRAPER"):
                 print(f"Ignoring {link}. --- no scraper specified!")
                 continue
@@ -60,6 +62,8 @@ class Main:
                             self.proxy_scrapers.append(TableScraper(url=link.format(**db), session=self.session))
                         case "scraper":
                             self.proxy_scrapers.append(Scraper(url=link.format(**db), session=self.session))
+                        case "json":
+                            self.proxy_scrapers.append(JSONScraper(url=link.format(**db), session=self.session))
                         #if something random, throw the basic scraper
                         case _:
                             self.proxy_scrapers.append(Scraper(url=link.format(**db), session=self.session))
