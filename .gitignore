@@ -162,4 +162,3 @@ cython_debug/
 
 # output file
 output.txt
-user_agents.txt
