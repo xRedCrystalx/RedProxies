@@ -23,12 +23,13 @@ source .venv/bin/activate    // bash - Linux
 
 ## Usage
 ```c
-usage: main.py [-h] -p ARG [-o ARG]
+usage: main.py [-h] -p PROTOCOL [-o OUTPUT] [-ua USER_AGENTS]
 
 options:
-  -h, --help            show this help message and exit
-  -p ARG, --proxy ARG   Supported proxy type: HTTP, HTTPS (can be lowercased)
-  -o ARG, --output ARG  Output file name to save .txt file
+  -h, --help                                  show this help message and exit
+  -p PROTOCOL, --protocol PROTOCOL            Supported proxy protocols: HTTP, HTTPS (can be lowercased)
+  -o OUTPUT, --output OUTPUT                  Output file name/path default: output.txt
+  -ua USER_AGENTS, --user-agents USER_AGENTS  File/path to user agent's .txt file
 ```
 **Usage Examples**
 ```
