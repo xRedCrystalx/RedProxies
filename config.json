@@ -1,6 +1,8 @@
 {
     "Configuration" : {
-        "AutoUpdatePackages" : true
+        "testerDefaultWebsiteHTTPS" : "https://google.com",
+        "testerDefaultWebsiteHTTP" : "http://neverssl.com",
+        "testerTimeout" : 10
     },
     "WebsiteScraper" : {
         "https://www.proxy-list.download/api/v1/get?type={type}&anon={anon}": {
