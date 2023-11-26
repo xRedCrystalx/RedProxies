@@ -1,120 +1,82 @@
-import sys, argparse, asyncio, aiohttp, json, os, typing, random
+import sys, argparse, asyncio, aiohttp, json, os, platform
 sys.dont_write_bytecode = True
-from src.scraper import IPAddress, Scraper, TableScraper, JSONScraper
+import src.runner as con
+from src.core.cmds import Commands
 
 class Main:
     def __init__(self) -> None:
-        print("Initializing..")
-        self.proxies: list[IPAddress] = []
-        self.proxy_scrapers: list[Scraper | TableScraper] = []
-        self.path: str = os.path.dirname(os.path.realpath(__file__))
-        self.session: aiohttp.ClientSession = None
+        CONNECTOR.path = os.path.dirname(os.path.realpath(__file__))
         
-        with open(f"{self.path}/config.json", "r", encoding="utf-8") as config:
+        with open(f"{CONNECTOR.path}/config.json", "r", encoding="utf-8") as config:
             try:
                 self.config: dict[str, dict[str, dict[str, str | bool | list[str] | int]]] = json.load(config)
             except Exception as error:
                 raise error
-
-    def scraper_gen(self, method: str, config: dict[str, dict[str | typing.Any]]) -> None:
-        def recursive_gen(link: str, data: dict[str, typing.Any], index: int, db: dict[str, typing.Any]) -> None:
-            for key, value in list(data.items())[index:]:
-                if key.isupper() is False:
-                    if isinstance(value, list):
-                        for v in value:
-                            db[key] = v
-                            recursive_gen(link=link, data=data, index=index+1, db=db)
-                        break
-                    else:
-                        db[key] = value
-                        index += 1
-            else:
-                match data["SCRAPER"]:
-                    case "table":
-                        self.proxy_scrapers.append(TableScraper(url=link.format(**db), session=self.session))
-                    case "scraper":
-                        self.proxy_scrapers.append(Scraper(url=link.format(**db), session=self.session))
-                    #if something random, throw the basic scraper
-                    case "json":
-                        self.proxy_scrapers.append(JSONScraper(url=link.format(**db), session=self.session))
-                    case _:
-                        self.proxy_scrapers.append(Scraper(url=link.format(**db), session=self.session))
-
-        for link, data in config["WebsiteScraper"].items():
-            if not data.get("SCRAPER"):
-                print(f"Ignoring {link}. --- no scraper specified!")
-                continue
-            
-            if method in data["TYPE"]:
-                db: dict[str, str | int | bool] = {"type": method}
-                for i, (key, value) in enumerate(data.items()):
-                    if key.isupper() is False:
-                        if isinstance(value, list):
-                            for v in value:
-                                db[key] = v
-                                recursive_gen(link=link, data=data, index=i+1, db=db)
-                            break
-                        else:
-                            db[key] = value
-                else:
-                    match data["SCRAPER"]:
-                        case "table":
-                            self.proxy_scrapers.append(TableScraper(url=link.format(**db), session=self.session))
-                        case "scraper":
-                            self.proxy_scrapers.append(Scraper(url=link.format(**db), session=self.session))
-                        case "json":
-                            self.proxy_scrapers.append(JSONScraper(url=link.format(**db), session=self.session))
-                        #if something random, throw the basic scraper
-                        case _:
-                            self.proxy_scrapers.append(Scraper(url=link.format(**db), session=self.session))
-    
-    async def main(self, method: str, output_file: str) -> None:
-        async def start_scraper(scraper: Scraper | TableScraper) -> None:
-            try:
-                self.proxies.extend(await scraper.scrape())
-            except Exception:
-                pass    
         
         if self.config == {} or not self.config:
             raise ValueError("Config file is empty or doesn't exist.")
-        
-        async with aiohttp.ClientSession() as session:
-            print("--- Session Started ---")
-            self.session = session
-            self.scraper_gen(method=method, config=self.config)
 
-            async with asyncio.TaskGroup() as group:
-                [group.create_task(start_scraper(scraper=scraper)) for scraper in self.proxy_scrapers]
-        print("--- Session Closed ---")
-        
-        try:
-            with open(output_file, "w") as f:
-                f.write("\n".join([repr(IP) for IP in self.proxies]))
-            print(f"Successfully saved proxy IPs in text file. {output_file}")
-        except Exception as error:
-            print(f"Failed to save proxy IPs. {type(error).__name__}: {error}")
+        CONNECTOR.c: con.colors.C | con.colors.CNone = con.colors.auto_color_handler()
+        CONNECTOR.config = self.config
+    
+    async def main(self, protocol: str, output_file: str, user_agents: str) -> None:
+        c: con.colors.C | con.colors.CNone = CONNECTOR.c
+        CONNECTOR.output_file = output_file
+        CONNECTOR.protocol = protocol
+        print(f"""{c.DRed}
+      ________     ________________                    _____             
+      ___  __ \\__________  /__  __ \\________________  ____(_)____________
+      __  /_/ /  _ \\  __  /__  /_/ /_  ___/  __ \\_  |/_/ / /_  _ \\_  ___/
+      _  _, _//  __/ /_/ / _  ____/_  /   / /_/ /_>  <  / //  __/(__  ) 
+      /_/ |_| \\___/\\__,_/  /_/     /_/    \\____//_/|_| /_/ \\___//____/  
 
-        print("Done.")
+{CONNECTOR.text_handler(text=f"{c.Red}xRedCrystalx {c.R}| {c.DBlue}2023 {c.R}| {CONNECTOR._version}", width=80, option="center")}
+{CONNECTOR.text_handler(text=f"{c.Gray}OS{c.R}: {CONNECTOR.OS} | {c.Gray}Python{c.R}: {platform.python_version()} | {c.Gray}CPU{c.R}: {os.cpu_count()}", width=80, option="center")}
+────────────────────────────────────────────────────────────────────────────────""")
+        async with aiohttp.ClientSession(headers=CONNECTOR._default_headers) as session:
+            CONNECTOR.session = session
+            print(f"[{c.Green}+{c.R}] Asynchronous session established: {session.headers.get("User-Agent")}")
+            
+            await CONNECTOR.cmd_class._scraper_gen(protocol=protocol, config=self.config)
+            if not CONNECTOR.proxy_scrapers:
+                print(f"[{c.Red}-{c.R}] No website scrapers found. Website scraping is now disabled.")
+            else:
+                print(f"[{c.Green}+{c.R}] Website scrapers loaded into memory. Scraper count: {len(CONNECTOR.proxy_scrapers)}")
+            
+            await CONNECTOR.cmd_class.load_user_agents(path=user_agents)
+                        
+            print(f"────────────────────────────────────────────────────────────────────────────────\n{c.Gray}Use 'help' command for more information.{c.R}")
+            try:
+                await CONNECTOR.cmd_handler()
+            except Exception:
+                await CONNECTOR.cmd_class._terminator()
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    metavar = "ARG"
+    formatter = lambda prog: argparse.HelpFormatter(prog,max_help_position=52)
+    parser = argparse.ArgumentParser(formatter_class=formatter)
+    CONNECTOR: con.Connector = con.connector
+    CONNECTOR.cmd_class = Commands()
+    
     parser.add_argument(
-        "-p", "--proxy",
-        help="Supported proxy type: HTTP, HTTPS (can be lowercased)",
+        "-p", "--protocol",
+        help="Supported proxy protocols: HTTP, HTTPS (can be lowercased)",
         required=True,
-        metavar=metavar
     )
     parser.add_argument(
         "-o", "--output",
-        help="Output file name to save .txt file",
+        help="Output file name/path default: output.txt",
         default="output.txt",
-        metavar=metavar
+    )
+    parser.add_argument(
+        "-ua", "--user-agents",
+        help="File/path to user agent's .txt file",
+        default=None,
     )
     args: argparse.Namespace = parser.parse_args()
+    #print(args)
 
     if sys.version_info >= (3, 7):
-        asyncio.run(Main().main(args.proxy.lower(), args.output))
+        asyncio.run(Main().main(protocol=args.protocol.lower(), output_file=args.output, user_agents=args.user_agents))
     else:
         print("Please upgrade your python.")
 
