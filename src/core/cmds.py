@@ -1,8 +1,8 @@
 import sys, typing, asyncio, json, random
 sys.dont_write_bytecode = True
 from src.runner import connector, IPv6p, IPv4p
-import src.core.WebsiteScraper as wScraper
-import src.core.ProxyTester as pTester
+import src.core.websiteScraper as wScraper
+import src.core.proxyTester as pTester
 
 class Commands:
     def __init__(self) -> None:

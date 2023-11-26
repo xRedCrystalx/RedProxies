@@ -1,7 +1,7 @@
 import sys, re, typing, aiohttp, platform
 sys.dont_write_bytecode = True
 import src.system.colors as colors
-import src.core.WebsiteScraper as wScraper
+import src.core.websiteScraper as wScraper
 
 if typing.TYPE_CHECKING:
     import src.core.cmds as cmds
