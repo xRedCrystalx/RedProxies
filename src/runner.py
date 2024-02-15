@@ -24,7 +24,7 @@ class Connector:
         self.protocol: str = None
         self.output_file: str = None
         
-        self._version: str = "v0.0.2-b1"
+        self._version: str = "v0.0.3"
         self._default_headers: dict[str, str] = {"User-Agent" : f"RedCrawler/{self._version} ({self.OS}; Python) aiohttp/{aiohttp.__version__}"}
         self._default_user_agent: str = f"RedCrawler/{self._version} ({self.OS}; Python) aiohttp/{aiohttp.__version__}"
     
@@ -60,7 +60,6 @@ class Connector:
             if [x for x in self.cmd_class.commands.keys() if cmd in x]:
                 arguments: list[str] = parser(cmd_str=cmd_request)
                 await self.cmd_class._cmd_resolver(*arguments)
-
             else:
                 await self.cmd_class._cmd_resolver("help")
 
