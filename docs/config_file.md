@@ -1,21 +1,21 @@
-## Configuration File:
+# Configuration File:
 This project is made to be as customizable as possible which is why I have created a config file. Currently, this is a **JSON** file, but it may be changed to **YAML** or other file types in future.
 
-# GENERAL CONFIG:
+## GENERAL CONFIG:
 General config can be found under the `Configuration` key.
 The following options are available:
 - **testerDefaultWebsiteHTTPS:** website used for HTTPS proxy testing *(default: https://www.google.com)*
 - **testerDefaultWebsiteHTTP:** website used for HTTP proxy testing  *(default: http://neverssl.com)*
 - **testerTimeout:**  timeout in seconds when waiting for a response from the server *(default: 10)*
 
-# SCRAPER CONFIG:
+## SCRAPER CONFIG:
 ```json
 {
-    "<link>" : {
+    "<link with placeholders eg. https://test.com/smt.php?test={abc}>" : {
         "SCRAPER" : str
         "TYPE" : list, str
 
-        "<custom lowercased variable>" : str, bool, list, int, float
+        "<custom lowercased variable eg. abc>" : str, bool, list, int, float
     },
 }
 ```
