@@ -16,7 +16,7 @@ class Main:
         if self.config == {} or not self.config:
             raise ValueError("Config file is empty or doesn't exist.")
 
-        CONNECTOR.c: con.colors.C | con.colors.CNone = con.colors.auto_color_handler()
+        CONNECTOR.c = con.colors.auto_color_handler()
         CONNECTOR.config = self.config
     
     async def main(self, protocol: str, output_file: str, user_agents: str) -> None:
@@ -30,7 +30,7 @@ class Main:
       _  _, _//  __/ /_/ / _  ____/_  /   / /_/ /_>  <  / //  __/(__  ) 
       /_/ |_| \\___/\\__,_/  /_/     /_/    \\____//_/|_| /_/ \\___//____/  
 
-{CONNECTOR.text_handler(text=f"{c.Red}xRedCrystalx {c.R}| {c.DBlue}2023 {c.R}| {CONNECTOR._version}", width=80, option="center")}
+{CONNECTOR.text_handler(text=f"{c.Red}xRedCrystalx {c.R}| {c.DBlue}2024 {c.R}| {CONNECTOR._version}", width=80, option="center")}
 {CONNECTOR.text_handler(text=f"{c.Gray}OS{c.R}: {CONNECTOR.OS} | {c.Gray}Python{c.R}: {platform.python_version()} | {c.Gray}CPU{c.R}: {os.cpu_count()}", width=80, option="center")}
 ────────────────────────────────────────────────────────────────────────────────""")
         async with aiohttp.ClientSession(headers=CONNECTOR._default_headers) as session:
@@ -73,9 +73,8 @@ if __name__ == "__main__":
         default=None,
     )
     args: argparse.Namespace = parser.parse_args()
-    #print(args)
 
-    if sys.version_info >= (3, 7):
+    if sys.version_info >= (3, 12):
         asyncio.run(Main().main(protocol=args.protocol.lower(), output_file=args.output, user_agents=args.user_agents))
     else:
         print("Please upgrade your python.")
