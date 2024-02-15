@@ -47,3 +47,16 @@ All documentation can be found [here](https://github.com/xRedCrystalx/RedProxies
 This software is licensed under the [Creative Commons Attribution-NonCommercial 4.0 International License](https://creativecommons.org/licenses/by-nc/4.0/legalcode)
 
 You can find this project's licence [here](https://github.com/xRedCrystalx/RedProxies/blob/main/LICENSE).
+
+
+## Disclaimer:
+
+The RedProxies tool is provided for educational and informational purposes only. The creators and contributors of this tool do not condone or support any illegal or unethical activities, including but not limited to unauthorized access to computer systems or networks.
+
+By using the RedProxies, you agree to use it responsibly and in compliance with all applicable laws and regulations. You acknowledge that the tool may be used to scan networks and systems and gaining access to them, but you are solely responsible for obtaining proper authorization before conducting any scanning activities.
+
+The creators and contributors of this tool shall not be held responsible or liable for any misuse, damage, or consequences resulting from the use of the tool by third parties. Users of the tool assume all risks associated with its use and agree to indemnify and hold harmless the creators and contributors from any claims, damages, or losses arising from such use.
+
+Furthermore, the RedProxies is provided "as is" without any warranty or guarantee of its accuracy, reliability, or suitability for any particular purpose. The creators and contributors make no representations or warranties regarding the performance or effectiveness of the tool.
+
+By using the RedProxies, you acknowledge and accept these terms and conditions. If you do not agree with these terms, you should not use the tool.
