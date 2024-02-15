@@ -1,4 +1,4 @@
-import sys, aiohttp, re, json
+import sys, aiohttp, re, json, typing
 sys.dont_write_bytecode = True
 
 # global scraper class for websites, used by other scrapers
@@ -12,9 +12,11 @@ class Scraper:
         
         # constants for IP searching
         self.constants: dict[str, re.Pattern | list[str | re.Pattern]] = {
-            "IPTypes" : ["ip", "host", "address", "ipv4", "ipv6"],
+            "IPTypes" : ["ip", "host", "address", "ipv4", "ipv6", "ip4", "ip6", "ips"],
             "PortTypes" : ["port", "portnumber", "gate"],
-            "Protocols" : ["ssl", "secure", "socks", "http", "https", "socks4", "socks5"],
+            "ProtocolTypes" : ["protocol", "type", "prot"],
+
+            "PROTOCOLS" : ["ssl", "secure", "socks", "http", "https", "socks4", "socks5"],
             
             "IPv4" : re.compile(r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b"),
             "IPv4+PORT" : re.compile(r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}:[0-9]+\b"),
@@ -34,12 +36,12 @@ class Scraper:
     # Searches for IPv4 and IPv6 addresses with PORTs and converts them in IPAddress object
     async def handler(self, text: str) -> None:
         #IPv4 regex - 192.168.1.1:8080
-        IPv4: list[str] = re.findall(pattern=self.constants["IPv4+PORT"], string=text)
+        IPv4: list[str] = self.constants["IPv4+PORT"].findall(string=text) 
         if IPv4:
             self.IPs.extend(IPv4)
 
         #IPv6 regex - 2001:db8::1:8080 or [3ffe:1900:4545:3:200:f8ff:fe21:67cf]:12345
-        IPv6: list[str] = re.findall(pattern=self.constants["IPv6+PORT"], string=text)
+        IPv6: list[str] = self.constants["IPv6+PORT"].findall(string=text)
         if IPv6:
             self.IPs.extend(IPv6)
     
@@ -51,7 +53,6 @@ class Scraper:
             response: str = await self.request()
             await self.handler(text=response)
         except Exception as error:
-            print(error)
             raise error
 
         return self.IPs
@@ -82,14 +83,83 @@ class TableScraper(Scraper):
     """
 
 # json scraper class, equals to **Scraper**, changes searching functionality
+
 class JSONScraper(Scraper):
+    # dict walker, recursevly walks through the dict
+    def dict_walker(self, json_dict: dict[str, typing.Any]) -> None:
+        for key, value in json_dict.items():
+            # if key == ip type name, check for matches -> {"IPv4" : ["ip1", "ip2", "ip3"]}
+            if self.key_check(key.lower(), "IPTypes") and isinstance(value, (dict, list, tuple)):
+                for IP in value:
+                    self.get_matches(IP)
+            
+            # protocols handler -> {"http" : ["ip1", "ip2", "ip3"]}
+            elif self.key_check(key.lower(), "PROTOCOLS") and isinstance(value, (dict, list, tuple)):
+                if key.lower() == self.protocol.lower():
+                    for PROTOCOL in value:
+                        self.get_matches(PROTOCOL)
+
+            # unknown, search more
+            elif isinstance(value, dict):
+                self.dict_walker(value)
+
+            # unknown, check matches
+            elif isinstance(value, (list, tuple)):
+                if isinstance(value[0], str):
+                    self.get_matches(item)
+                else:
+                    for item in value:
+                        self.get_matches(item)
+
+            # NOTE: handle dict[str, dict], ipv6
+
+    
+    def get_matches(self, request: dict[str, typing.Any] | str | list[dict | str]) -> None:
+        if isinstance(request, dict):
+            IP: str = ":"
+            for key, value in request.items():
+                if self.key_check(key.lower(), "ProtocolTypes") and str(value).lower() != self.protocol:
+                    break
+
+                elif self.key_check(key.lower(), "IPTypes"):
+                    full_ips: list[str] | None = self.value_check(self.constants["IPv4+PORT"], value) or self.value_check(self.constants["IPv6+PORT"], value)
+                    if full_ips:
+                        IP = full_ips[0]
+                        continue
+                
+                    ip_only: list[str] | None = self.value_check(self.constants["IPv4"], value) or self.value_check(self.constants["IPv6"], value)
+                    if ip_only:
+                        IP = ip_only[0] + IP
+
+                elif self.key_check(key.lower(), "PortTypes"):
+                    port: list[str] | None = self.value_check(self.constants["PORT"], value)
+                    if port:
+                        IP += port[0]
+            else:
+                data = self.value_check(self.constants["IPv4+PORT"], IP) or self.value_check(self.constants["IPv6+PORT"], IP)
+                if data:
+                    self.IPs.extend(data)
+        
+        elif isinstance(request, (list, tuple)):
+            for item in request:
+                data: list[str] | None = self.value_check(self.constants["IPv4+PORT"], item) or self.value_check(self.constants["IPv6+PORT"], item)
+                if data:
+                    self.IPs.extend(data)
+        else:
+            data: list[str] | None = self.value_check(self.constants["IPv4+PORT"], request) or self.value_check(self.constants["IPv6+PORT"], request)
+            if data:
+                self.IPs.extend(data)
+            
+    def key_check(self, key: str, constant: str) -> None:
+        return key in self.constants.get(constant)
+
+    def value_check(self, pattern: re.Pattern, string: str) -> list[str] | None:
+        return pattern.findall(string) or None
+
     # replacing handler method with new one for searching
     # this handler is programmed to try and figure out what JSON object it got and create IP:PORT matches with filtered requests
-    # handler might not be able to handle every kind of provided JSON objects
+    # handler might not be able to handle every kind of provided JSON object
     async def handler(self, text: str) -> str:
-        print("JSON Scraper is currently work in progress")
-        #return
-        
         # decoding attempt
         try:
             decodedJSON: dict = json.loads(text)
@@ -99,104 +169,9 @@ class JSONScraper(Scraper):
             except Exception:
                 print(f"JSONScraper failed to decode data of {self.url} website. -- Attempting to perform normal Scraper attempt.")
                 # if it fails, we attempt to search for IPs with basic scraper
-                await Scraper(url=self.url, session=self.session).scrape()
                 return
         
         # successful decoding
         # now we have to figure out structure
-        # booleans to check what we have found
-        
-        check: dict[str, bool] = {
-            "IP" : False,
-            "PORT" :  False
-        }
-        
-        def recursive_checking(data: dict, index: int) -> None:
-            for key, value in list(data.items())[index:]:
-                if isinstance(value, list):
-                    for v in value:
-                        recursive_checking(data=data, index=index+1)
-                    break
-                elif isinstance(value, dict):
-                    ...
-                
-                else:
-                    index += 1
-        
-        # start of the JSON onject. {}
-        # values have to be lists or dicts, otherwise no IPs were provided (normally error messages)
-        for key, value in self.constants.items():
-            # here are three posibilities, list of IP:PORT (str), list of dict or list of lists
-            # # dict[str, list[ANY]]
-            if isinstance(value, list):
-                # lets check if the first argument is string, if so, this is *most likely* list of IPs
-                # dict[str, list[str]]
-                if isinstance(value[0], str):
-                    # now, we search for IPv4 and IPv6 IPs with port and extend to database
-                    for regex in ["IPv4+PORT", "IPv6+PORT"]:
-                        self.IPs.extend(re.findall(pattern=self.constants[regex], string=text, flags=re.IGNORECASE))
-                
-                # checking if the first value is dict, this normally is dict with key:value for IP ({"ip" : "192.168.1.1.", "port" : "80", "protocol" : "http"})
-                # dict[str, list[dict[str, ANY]]]
-                elif isinstance(value[0], dict):
-                    # we iterate the list
-                    """
-                    for dictionary in value:
-                        # set default IPAddress object
-                        IP = IPAddress(IPv4=None, IPv6="", PORT=None)
-                        for k, v in dictionary.items():
-                            # checking for each key in the dict. If we don't get IP, PORT and right protocol, that dict will be ignored
-                            if k in self.constants["IPTypes"]:
-                                #now we have to figure out if its IPv4 or IPv6
-                                if re.findall(self.constants["IPv4", v]):
-                                    IP.IPv4 = v
-                                else:
-                                    IP.IPv6 = v
-                                # setting check to true for save check
-                                check["IP"] = True
-                            
-                            # checking if key is port
-                            elif k in self.constants["PortTypes"]:
-                                IP.PORT = v
-                                # setting check to true for save check
-                                check["PORT"] = True
-                            
-                            # checking for protocols -- this will require future update
-                            elif k in self.constants["Protocols"]:
-                                if v.lower() != self.protocol.lower():
-                                    # reseting checks and skiping this dict
-                                    check["IP"], check["PORT"] = (False, False)
-                                    continue
-                        else:
-                            # if IP wasnt fully set, we skip
-                            if False in list(check.values()):
-                                check["IP"], check["PORT"] = (False, False)
-                                continue
-                            else:
-                                # add the IP and reset checker
-                                self.IPs.append(IP)
-                                check["IP"], check["PORT"] = (False, False)
-                """
-                # else, we can't really find anything else, list[list[ANY]] is really not logical, so returning
-                else:
-                    print(f"Couldn't gather any data from: {self.url}")
-                    return
-            #  
-            elif isinstance(value, dict):
-                pass
-            
-            else:
-                # if value is string, bool, int, float - there is no way of IP addresses being stored
-                print(f"Couldn't find any IP address for url: {self.url}")
-                return
-
-
-"""
-{
-    "ipv4" : ["IP1", "IP2"]
-    
-}
-
-
-
-"""
+        self.dict_walker(decodedJSON)
+        return self.IPs
