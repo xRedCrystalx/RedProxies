@@ -37,7 +37,7 @@ class Commands:
 
         await recursive(index=0, path=self.commands)
     
-    def _read_file(self, path: str) -> str | bytes | bool:
+    def _read_file(self, path: str, *ARG) -> str | bytes | bool:
         if path:
             try:
                 with open(path, "r", encoding="utf-8") as file:
@@ -50,7 +50,7 @@ class Commands:
                     return False
         return False
     
-    def _save_file(self, path: str, data: str | bytes) -> None:
+    def _save_file(self, path: str, data: str | bytes, *ARG) -> None:
         if path:
             try:
                 with open(path, "w", encoding="utf-8") as file:
@@ -65,7 +65,7 @@ class Commands:
                     return False
         return False
 
-    async def _scraper_gen(self, protocol: str, config: dict[str, dict[str | typing.Any]]) -> None:
+    async def _scraper_gen(self, protocol: str, config: dict[str, dict[str | typing.Any]], *ARG) -> None:
         def recursive_gen(link: str, data: dict[str, typing.Any], index: int, db: dict[str, typing.Any]) -> None:
             for key, value in list(data.items())[index:]:
                 if key.isupper() is False:
@@ -104,7 +104,7 @@ class Commands:
         sys.exit(0)
 
 
-    async def load_user_agents(self, path: str) -> None:
+    async def load_user_agents(self, path: str, *ARG) -> None:
         data: str | bytes | bool = self._read_file(path=path)
         
         if path:
@@ -119,7 +119,7 @@ class Commands:
         else:
             print(f"[{connector.c.Yellow}!{connector.c.R}] No user agents file was provided. Default user agent will be used.")
             
-    async def load_proxy_IP_addresses(self, path: str) -> None:
+    async def load_proxy_IP_addresses(self, path: str, *ARG) -> None:
         data: str | bytes | bool = self._read_file(path=path)
         
         if path:
@@ -144,7 +144,7 @@ class Commands:
         return
     
     
-    async def website_scraper(self) -> None:
+    async def website_scraper(self, *ARG) -> None:
         async def start_scraper(scraper: wScraper.Scraper | wScraper.TableScraper | wScraper.JSONScraper) -> None:
             try:
                 connector.proxies.extend(await scraper.scrape())
@@ -157,34 +157,32 @@ class Commands:
         
         self._save_file(path=connector.output_file, data="\n".join(connector.proxies))
 
-    async def proxy_tester(self, agent: str = "") -> None:
-        print(agent)
+    async def proxy_tester(self, agent: str = "", *ARG) -> None:
         if connector.protocol == "http":
-            funcs: list[pTester.HTTPtester] = [pTester.HTTPtester(protocol=connector.protocol, proxy=IP, user_agent=connector._default_user_agent if agent != "--random-user-agent" else (random.choice(connector.user_agents if connector.user_agents else [connector._default_user_agent]))) for IP in connector.proxies]
+            funcs: list[pTester.HTTPtester] = [pTester.HTTPtester(protocol=connector.protocol, proxy=IP, user_agent=connector._default_user_agent if agent not in ("--random-user-agent", "-rua") else (random.choice(connector.user_agents if connector.user_agents else [connector._default_user_agent]))) for IP in connector.proxies]
         
         if funcs:
             async with asyncio.TaskGroup() as group:
                 tasks: list[asyncio.Task] = [group.create_task(fun.check(timeout=connector.config["Configuration"]["testerTimeout"])) for fun in funcs]
             
-
-    async def help(self, cmd: str = "") -> None:
+    async def help(self, cmd: str = "", *ARG) -> None:
         _default: str = "Help page: {cmd}\n\nDefault: {default}\nAliases: {aliases}\nDescription: {description}\n\n" 
-        if cmd in ["load"]:    
+        if cmd in ("load",):
             print(f"{_default.format(cmd=cmd, default="load", aliases="add, upload", description="Load data into the memory")}\
 Options:\n\
 - proxies [PROXY FILE]  > Loads proxy server IPs into the memory. Aliases: IPs, proxy_servers\n\
 - agents [AGENT FILE]   > Loads user agents into the memory. Aliases: user_agents, user-agents")
-        elif cmd in ["scan", "scrape"]:
+        elif cmd in ("scan", "scrape"):
             print(f"{_default.format(cmd=cmd, default="scrape", aliases="scan", description="Scrape for proxy servers.")}\
 Options:\n\
-- websites [NONE]  > Scrapes websites from the config. Aliases: website")
+- websites [OPTIONAL: --random-user-agent | -rua]  > Scrapes websites from the config. Aliases: website")
 
-        elif cmd in ["reload"]:
+        elif cmd in ("reload",):
             print(f"{_default.format(cmd=cmd, default="reload", aliases="/", description="Reloads specified option and saves it in the memory.")}\
 Options:\n\
 - config [NONE] > Reloads config file. Aliases: cfg, config_file, configuration, configuration_file")
 
-        elif cmd in ["exit", "kill", "end", "quit", "stop", "terminate"]:
+        elif cmd in ("exit", "kill", "end", "quit", "stop", "terminate"):
             print(f"{_default.format(cmd=cmd, default="exit", aliases="kill, end, quit, stop, terminate", description="Terminates RedProxies processes.")}")
         
         else:
