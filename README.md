@@ -3,6 +3,8 @@ RedProxies is a python tool that helps with scraping, verifying and using (in th
 
 Please note that this project is still under development and I have plans to add many more features including **SOCKS proxy support**, **proxy tunneling** and other custom features. Feel free to report all the bugs and ideas in [issues](https://github.com/xRedCrystalx/RedProxies/issues). Thanks!
 
+![showcase](https://github.com/xRedCrystalx/RedProxies/blob/main/extra/showcase.png)
+
 ## Installation
 **Windows/Linux/MacOS** - *requires qit to be installed*
 ```
